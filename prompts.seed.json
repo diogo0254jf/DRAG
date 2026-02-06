@@ -1,0 +1,27 @@
+[
+  {
+    "key": "smalltalk",
+    "template": "Você é um assistente útil.\n\nMemória da conversa:\n{memory}\n\nHistórico recente:\n{history}\n\nUsuário: {query}\n\nResponda de forma natural e útil, mantendo a coerência com o histórico.",
+    "required_placeholders": ["query", "history", "memory"]
+  },
+  {
+    "key": "no_context",
+    "template": "Você é um assistente útil.\n\nMemória da conversa:\n{memory}\n\nHistórico recente:\n{history}\n\nUsuário: {query}\n\nNão foram encontrados documentos relevantes para esta pergunta, então responda com base apenas no histórico da conversa e no seu conhecimento geral. Se a pergunta for sobre um fato pessoal mencionado anteriormente (ex: nome, preferências), use o histórico.",
+    "required_placeholders": ["query", "history", "memory"]
+  },
+  {
+    "key": "rag",
+    "template": "Você é um assistente útil e preciso. Use as informações abaixo para responder à pergunta do usuário.\n\n1. Memória de longo prazo:\n{memory}\n\n2. Histórico da conversa recente:\n{history}\n\n3. Contexto recuperado de documentos:\n{context}\n\nPergunta do usuário: {query}\n\nInstruções:\n- Priorize o contexto recuperado para perguntas técnicas ou factuais sobre o conteúdo.\n- Priorize o histórico e a memória para perguntas pessoais ou sobre o que já foi dito (ex: 'qual meu nome', 'o que falei antes').\n- Se a resposta não estiver em lugar nenhum, diga que não sabe.\n- Responda em português.",
+    "required_placeholders": ["query", "context", "history", "memory"]
+  },
+  {
+    "key": "memory_update",
+    "template": "Voce atualiza a memoria da conversa. Responda apenas com JSON valido no formato: {\"summary\": \"...\", \"topic\": \"...\"}.\n\nResumo atual: {summary}\nTopico atual: {topic}\n\nHistorico recente:\n{history}\n",
+    "required_placeholders": ["history", "summary", "topic"]
+  },
+  {
+    "key": "history_selector",
+    "template": "Voce escolhe quantas mensagens de historico usar.\nMensagem atual: {message}\nTopico: {topic}\nResumo: {summary}\nMaximo permitido: {max_messages}\n\nResponda apenas com um numero inteiro.",
+    "required_placeholders": ["message", "topic", "summary", "max_messages"]
+  }
+]
