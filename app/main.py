@@ -7,7 +7,7 @@ from app.core.config import FAISS_PATH, PROMPT_SEED_PATH, HISTORY_MAX_MESSAGES
 from app.core.rag import build_llm, build_retriever, index_docs, load_vectorstore
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
-from app.routers import chat, conversations, health, prompts
+from app.routers import chat, conversations, health, prompts, admin
 from app.services.prompts import seed_prompts
 from app.services.chat_graph import build_chat_graph
 
@@ -39,12 +39,20 @@ def startup() -> None:
     app.state.retriever = build_retriever(vectorstore)
     app.state.llm = build_llm()
     
+    # Init checkpointer
+    from langgraph.checkpoint.sqlite import SqliteSaver
+    import sqlite3
+
+    conn = sqlite3.connect("checkpoints.db", check_same_thread=False)
+    checkpointer = SqliteSaver(conn)
+
     # Build chat graph with dependencies
     app.state.chat_graph = build_chat_graph(
         llm=app.state.llm,
         retriever=app.state.retriever,
         db_session_factory=SessionLocal,
         max_messages=HISTORY_MAX_MESSAGES,
+        checkpointer=checkpointer,
     )
 
     # Seed prompts
@@ -59,4 +67,4 @@ app.include_router(health.router)
 app.include_router(conversations.router)
 app.include_router(chat.router)
 app.include_router(prompts.router)
-
+app.include_router(admin.router)

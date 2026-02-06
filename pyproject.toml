@@ -17,4 +17,6 @@ dependencies = [
     "pypdf>=6.6.2",
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.35.0",
+    "langgraph-checkpoint-sqlite>=3.0.3",
+    "hatchet-sdk>=1.23.0",
 ]

@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
+from pydantic import BaseModel, Field
 
 from app.db.models import Conversation, Message
 from app.services.conversations import (
@@ -46,6 +47,7 @@ class ChatState:
     response: str = ""
     
     # Internal
+    should_retrieve: bool = False
     should_update_memory: bool = False
     error: Optional[str] = None
 
@@ -175,20 +177,60 @@ def create_update_memory_node(llm, db_session_factory):
     return update_memory
 
 
-def build_chat_graph(llm, retriever, db_session_factory, max_messages: int = 30):
-    """Build the chat StateGraph.
+
+@dataclass
+class RouteQuery(BaseModel):
+    """Route decision for the query."""
+    action: str = Field(
+        description="Action to take: 'retrieve' if documents are needed, 'no_retrieve' for smalltalk/general knowledge",
+        pattern="^(retrieve|no_retrieve)$"
+    )
+
+def create_route_node(llm):
+    """Create the route node."""
     
-    Args:
-        llm: LangChain LLM instance
-        retriever: Document retriever
-        db_session_factory: Factory function that returns a database session
-        max_messages: Maximum number of messages to include in history
+    def route_query(state: ChatState) -> dict:
+        """Decide whether to retrieve documents or not."""
+        if state.error:
+            return {"should_retrieve": False}
+        
+        # Simple routing heuristic fallback if LLM fails
+        # If query has > 5 words, assume it might need context
+        heuristic_decision = len(state.user_message.split()) > 5
+        
+        try:
+            structured_llm = llm.with_structured_output(RouteQuery)
+            decision = structured_llm.invoke(
+                f"Analise a pergunta do usuário e decida se é necessário buscar documentos para responder.\n"
+                f"Pergunta: {state.user_message}\n"
+                f"Responda 'retrieve' se precisar de contexto específico, 'no_retrieve' se for conversa fiada ou conhecimento geral."
+            )
+            should_retrieve = decision.action == "retrieve"
+        except Exception:
+            should_retrieve = heuristic_decision
+            
+        return {"should_retrieve": should_retrieve}
+        
+    return route_query
+
+def condition_routing(state: ChatState) -> str:
+    """Conditional edge logic."""
+    if state.should_retrieve:
+        return "retrieve"
+    return "generate"
+
+def build_chat_graph(
+    llm,
+    retriever,
+    db_session_factory,
+    max_messages: int = 30,
+    checkpointer = None,
+):
+    """Build the chat StateGraph with semantic routing."""
     
-    Returns:
-        Compiled StateGraph
-    """
-    # Create nodes with dependencies injected
+    # Create nodes
     prepare_context = create_prepare_context_node(db_session_factory, max_messages)
+    route = create_route_node(llm)
     retrieve = create_retrieve_node(retriever)
     generate = create_generate_node(llm, db_session_factory)
     update_memory = create_update_memory_node(llm, db_session_factory)
@@ -198,18 +240,31 @@ def build_chat_graph(llm, retriever, db_session_factory, max_messages: int = 30)
     
     # Add nodes
     builder.add_node("prepare_context", prepare_context)
+    builder.add_node("route", route)
     builder.add_node("retrieve", retrieve)
     builder.add_node("generate", generate)
     builder.add_node("update_memory", update_memory)
     
     # Add edges
     builder.add_edge(START, "prepare_context")
-    builder.add_edge("prepare_context", "retrieve")
+    builder.add_edge("prepare_context", "route")
+    
+    # Conditional routing
+    builder.add_conditional_edges(
+        "route",
+        condition_routing,
+        {
+            "retrieve": "retrieve",
+            "generate": "generate"
+        }
+    )
+    
     builder.add_edge("retrieve", "generate")
     builder.add_edge("generate", "update_memory")
     builder.add_edge("update_memory", END)
     
-    return builder.compile()
+    return builder.compile(checkpointer=checkpointer)
+
 
 
 def invoke_chat(
@@ -227,11 +282,16 @@ def invoke_chat(
     Returns:
         Assistant's response text
     """
+    # When using checkpointer, we need to provide a thread_id in config
+    config = {"configurable": {"thread_id": conversation_id}}
+    
     result = graph.invoke(
         ChatState(
             conversation_id=conversation_id,
             user_message=user_message,
-        )
+        ),
+        config=config,
     )
     
     return result["response"]
+
