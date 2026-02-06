@@ -1,70 +1,33 @@
-# LangGraph & LangChain - Documentação de Referência
+# LangGraph & LangChain - Documentação Consolidada
 
-Esta pasta contém documentação abrangente sobre LangGraph, coletada e organizada para servir como referência rápida em conversas futuras.
+Este diretório contém a referência técnica essencial para o desenvolvimento de agentes stateful utilizando LangGraph.
 
-## Índice
+## 📚 Índice de Referência
 
-### Fundamentos
-| Arquivo | Conteúdo |
-|---------|----------|
-| [01-overview.md](./01-overview.md) | Visão geral do LangGraph, instalação e conceitos básicos |
-| [02-state-graph.md](./02-state-graph.md) | Graph API: StateGraph, State, Nodes, Edges |
-| [03-persistence.md](./03-persistence.md) | Checkpointers, Threads, Memory Store |
-| [04-memory.md](./04-memory.md) | Short-term e Long-term Memory |
+### 1. [Arquitetura Core](./01-core-architecture.md)
+Conceitos fundamentais, Graph API vs Functional API, Nodes, Edges e gerenciamento de Estado.
 
-### APIs e Padrões
-| Arquivo | Conteúdo |
-|---------|----------|
-| [05-functional-api.md](./05-functional-api.md) | @entrypoint e @task decorators |
-| [06-interrupts-hitl.md](./06-interrupts-hitl.md) | Human-in-the-loop com interrupt() |
-| [07-durable-execution.md](./07-durable-execution.md) | Determinismo, replay e resuming |
-| [08-boas-praticas.md](./08-boas-praticas.md) | Patterns, testing e checklist de produção |
+### 2. [Persistência e Memória](./02-persistence-and-memory.md)
+Como manter o estado entre conversas, checkpointers para produção (Postgres/Redis) e memória de curto/longo prazo.
 
-### Funcionalidades Avançadas
-| Arquivo | Conteúdo |
-|---------|----------|
-| [09-streaming.md](./09-streaming.md) | 5 modos de streaming, tokens LLM, custom data |
-| [10-tools.md](./10-tools.md) | @tool, ToolNode, tools_condition, error handling |
-| [11-subgraphs.md](./11-subgraphs.md) | Modularização com subgraphs, multi-agent |
-| [12-command-send.md](./12-command-send.md) | Command para fluxo, Send para map-reduce |
-| [13-agentic-rag.md](./13-agentic-rag.md) | Tutorial completo de Agentic RAG |
+### 3. [Tools e Agentes Pré-construídos](./03-tools-and-prebuilt-agents.md)
+Definição de ferramentas (Functions), uso do `ToolNode` e como instanciar Agentes ReAct prontos com `create_react_agent`.
 
-### Produção
-| Arquivo | Conteúdo |
-|---------|----------|
-| [14-context-runtime.md](./14-context-runtime.md) | Context schema, Runtime, injeção de dados |
-| [15-prebuilt.md](./15-prebuilt.md) | create_react_agent, ToolNode, MessagesState |
-| [16-deployment.md](./16-deployment.md) | PostgresSaver, FastAPI, LangSmith, checklist |
+### 4. [Workflows Avançados](./04-advanced-workflows.md)
+Streaming de tokens em tempo real, modularização com subgrafos, controle dinâmico com `Command`/`Send` e Human-in-the-loop.
 
-## Quick Reference
+### 5. [Produção e Boas Práticas](./05-production-best-practices.md)
+Guia de deployment, observabilidade com LangSmith, segurança, resiliência e checklist de lançamento.
 
-### Instalação
-```bash
-pip install -U langgraph
-pip install langgraph-checkpoint-postgres  # Produção
-```
+---
 
-### Grafo Mínimo
-```python
-from langgraph.graph import StateGraph, MessagesState, START, END
-from langgraph.checkpoint.postgres import PostgresSaver
+## 🎓 Tutorial de Implementação
 
-def chat(state: MessagesState):
-    return {"messages": [llm.invoke(state["messages"])]}
+### [Agentic RAG Completo](./13-agentic-rag.md)
+Um guia passo a passo de como construímos o sistema de RAG (Retrieval-Augmented Generation) deste projeto.
 
-builder = StateGraph(MessagesState)
-builder.add_node("chat", chat)
-builder.add_edge(START, "chat")
-builder.add_edge("chat", END)
+---
 
-graph = builder.compile(checkpointer=PostgresSaver.from_conn_string(DB_URL))
-```
-
-### Invocação com Persistência
-```python
-config = {"configurable": {"thread_id": "user-123"}}
-result = graph.invoke({"messages": [user_message]}, config)
-```
-
-## Fonte
-Documentação oficial: https://docs.langchain.com/oss/python/langgraph/overview
+## 🔗 Atalhos
+- **Repositório**: [LangChain GitHub](https://github.com/langchain-ai/langgraph)
+- **Docs Oficiais**: [LangGraph Docs](https://langchain-ai.github.io/langgraph/)
