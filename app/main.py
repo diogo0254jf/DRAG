@@ -3,8 +3,8 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import FAISS_PATH, PROMPT_SEED_PATH, HISTORY_MAX_MESSAGES
-from app.core.rag import build_llm, build_retriever, index_docs, load_vectorstore
+from app.core.config import PROMPT_SEED_PATH, HISTORY_MAX_MESSAGES
+from app.core.rag import build_llm, build_retriever, get_vectorstore
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.routers import chat, conversations, health, prompts, admin
@@ -26,13 +26,8 @@ def startup() -> None:
     """Initialize application resources on startup."""
     Base.metadata.create_all(bind=engine)
 
-    # Load or create vectorstore
-    if os.path.exists(FAISS_PATH):
-        vectorstore = load_vectorstore()
-    else:
-        vectorstore = index_docs()
-        if vectorstore is None:
-            raise RuntimeError("No documents found in docs/ to build the index.")
+    # Initialize vectorstore (connection only)
+    vectorstore = get_vectorstore()
 
     # Store resources in app state
     app.state.vectorstore = vectorstore
