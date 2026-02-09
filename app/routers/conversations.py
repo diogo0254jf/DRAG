@@ -21,6 +21,33 @@ def _require_conversation(db: Session, conversation_id: str) -> Conversation:
     return conversation
 
 
+@router.get("")
+def list_conversations(db: Session = Depends(get_session)) -> list[dict]:
+    """List all conversations with their last message preview."""
+    conversations = (
+        db.query(Conversation)
+        .order_by(Conversation.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    
+    result = []
+    for conv in conversations:
+        last_msg = (
+            db.query(Message)
+            .filter(Message.conversation_id == conv.id)
+            .order_by(Message.created_at.desc())
+            .first()
+        )
+        result.append({
+            "conversation_id": str(conv.id),
+            "created_at": conv.created_at.isoformat(),
+            "preview": last_msg.content[:50] + "..." if last_msg and len(last_msg.content) > 50 else (last_msg.content if last_msg else "Empty"),
+            "message_count": db.query(Message).filter(Message.conversation_id == conv.id).count()
+        })
+    return result
+
+
 @router.post("", response_model=CreateConversationResponse)
 def create_conversation(db: Session = Depends(get_session)) -> CreateConversationResponse:
     conversation = Conversation()

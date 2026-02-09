@@ -49,6 +49,7 @@ services:
       - HATCHET_CLIENT_TOKEN=${HATCHET_CLIENT_TOKEN}
       - HATCHET_CLIENT_HOST_PORT=hatchet:7077
       - HATCHET_CLIENT_SERVER_URL=http://hatchet:8080
+      - HATCHET_CLIENT_TLS_STRATEGY=none
     volumes:
       - .:/app
       - /app/.venv
@@ -106,11 +107,16 @@ services:
     environment:
       DATABASE_URL: postgresql://hatchet:hatchet@hatchet-postgres:5432/hatchet
       SERVER_TASKQUEUE_RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
-      SERVER_URL: "http://localhost:8080"
-      SERVER_AUTH_COOKIE_DOMAIN: "localhost"
+      SERVER_URL: "http://hatchet:8080"
+      SERVER_AUTH_COOKIE_DOMAIN: "hatchet"
       SERVER_AUTH_COOKIE_INSECURE: "t"
       SERVER_GRPC_BIND_ADDRESS: "0.0.0.0"
+      SERVER_GRPC_BROADCAST_ADDRESS: "hatchet:7077"
       SERVER_GRPC_PORT: 7077
+      SERVER_GRPC_INSECURE: "true"
+      SERVER_LOGGER_LEVEL: "debug"
+      SERVER_AUTH_ADMIN_EMAIL: "${HATCHET_ADMIN_EMAIL:-admin@example.com}"
+      SERVER_AUTH_ADMIN_PASSWORD: "${HATCHET_ADMIN_PASSWORD:-Admin123!!}"
     ports:
       - "8080:8080"
       - "7077:7077"

@@ -1,4 +1,9 @@
+import json
+import logging
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.db.models import Conversation, Message
@@ -8,6 +13,8 @@ from app.services.conversations import (
     get_conversation,
     parse_conversation_id,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["chat"])
 
@@ -82,5 +89,85 @@ def chat(
     return ChatResponse(
         conversation_id=str(conversation.id),
         response=response_text,
+    )
+
+
+@router.post("/chat/stream")
+async def chat_stream(
+    payload: ChatRequest,
+    request: Request,
+    db: Session = Depends(get_session),
+):
+    """Streaming chat endpoint using Server-Sent Events (SSE).
+
+    Streams node-level updates as they happen in the LangGraph
+    execution, then persists the final response.  Implements §5.2.
+    """
+    conversation = _ensure_conversation(db, payload.conversation_id)
+
+    # Save user message
+    user_msg = Message(
+        conversation_id=conversation.id,
+        role="user",
+        content=payload.message,
+    )
+    db.add(user_msg)
+    db.commit()
+
+    conv_id = str(conversation.id)
+
+    async def event_generator():
+        from app.services.chat_graph import ChatState
+        from app.db.session import SessionLocal
+
+        graph = request.app.state.chat_graph
+        config = {"configurable": {"thread_id": conv_id}}
+
+        full_response = ""
+
+        try:
+            async for event in graph.astream(
+                ChatState(
+                    conversation_id=conv_id,
+                    user_message=payload.message,
+                ),
+                config=config,
+                stream_mode="updates",
+            ):
+                if "generate" in event:
+                    response_text = event["generate"].get("response", "")
+                    if response_text:
+                        full_response = response_text
+                        yield f"data: {json.dumps({'token': response_text, 'conversation_id': conv_id})}\n\n"
+
+            # Persist the full response
+            if full_response:
+                save_db = SessionLocal()
+                try:
+                    save_db.add(
+                        Message(
+                            conversation_id=uuid.UUID(conv_id),
+                            role="assistant",
+                            content=full_response,
+                        )
+                    )
+                    save_db.commit()
+                finally:
+                    save_db.close()
+
+            yield f"data: {json.dumps({'done': True, 'conversation_id': conv_id})}\n\n"
+
+        except Exception as exc:
+            logger.error("Stream error: %s", exc)
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )
 

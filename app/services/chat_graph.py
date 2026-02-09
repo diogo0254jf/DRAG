@@ -92,17 +92,29 @@ def create_prepare_context_node(db_session_factory, max_messages: int = 30):
     return prepare_context
 
 
-def create_retrieve_node(retriever):
-    """Create the retrieve node with access to the retriever."""
-    
+def create_retrieve_node(retriever, db_session_factory=None):
+    """Create the retrieve node with hybrid search support."""
+
     def retrieve(state: ChatState) -> dict:
-        """Retrieve relevant documents for RAG."""
+        """Retrieve relevant documents using hybrid search (§4.2)."""
         if state.error:
             return {}
-        
-        context, _ = retrieve_context(retriever, state.user_message)
-        return {"context": context or ""}
-    
+
+        db_session = None
+        if db_session_factory:
+            db_session = db_session_factory()
+
+        try:
+            context, _ = retrieve_context(
+                retriever,
+                state.user_message,
+                db_session=db_session,
+            )
+            return {"context": context or ""}
+        finally:
+            if db_session:
+                db_session.close()
+
     return retrieve
 
 
@@ -226,12 +238,12 @@ def build_chat_graph(
     max_messages: int = 30,
     checkpointer = None,
 ):
-    """Build the chat StateGraph with semantic routing."""
+    """Build the chat StateGraph with semantic routing and hybrid search."""
     
     # Create nodes
     prepare_context = create_prepare_context_node(db_session_factory, max_messages)
     route = create_route_node(llm)
-    retrieve = create_retrieve_node(retriever)
+    retrieve = create_retrieve_node(retriever, db_session_factory)
     generate = create_generate_node(llm, db_session_factory)
     update_memory = create_update_memory_node(llm, db_session_factory)
     

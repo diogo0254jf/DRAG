@@ -1,8 +1,8 @@
 from hatchet_sdk import Hatchet
 from dotenv import load_dotenv
 
-# Load env vars
-load_dotenv()
+# Load env vars - don't override existing env vars (like tokens set by startup script)
+load_dotenv(override=False)
 
 from app.workflows.ingestion import ingestion_workflow
 

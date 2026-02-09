@@ -3,149 +3,1323 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RAG Chat</title>
+  <title>DRAG - Test Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0b1016;
-      --panel: #121a24;
-      --text: #e8edf3;
-      --muted: #9aa7b4;
-      --accent: #56d6a0;
-      --border: #1e2a38;
+      --bg: #0F172A;
+      --panel: #1E293B;
+      --text: #F1F5F9;
+      --muted: #94A3B8;
+      --accent: #3B82F6;
+      --accent-hover: #2563EB;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --error: #EF4444;
+      --border: #334155;
+      --code-bg: #0F172A;
+      --radius: 12px;
+      --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }
-    * { box-sizing: border-box; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0;
-      font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, #12202f 0%, #0b1016 60%);
+      font-family: var(--font-sans);
+      background: var(--bg);
       color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
     }
-    .wrap {
-      max-width: 820px;
-      margin: 32px auto;
-      padding: 0 16px;
+
+    /* Header */
+    .header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header h1 svg {
+      width: 28px;
+      height: 28px;
+      color: var(--accent);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+
+    .status-badge.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--error);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Main Layout */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
     .card {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-header h2 svg {
+      width: 20px;
+      height: 20px;
+      color: var(--accent);
+    }
+
+    .card-body {
       padding: 20px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
     }
-    h1 {
-      font-size: 22px;
-      margin: 0 0 12px;
-      letter-spacing: 0.3px;
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 200ms ease;
     }
-    .row {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: 1fr auto;
-      margin-bottom: 16px;
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.05);
     }
-    input, textarea {
-      width: 100%;
-      background: #0d141c;
+
+    .upload-zone svg {
+      width: 48px;
+      height: 48px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .upload-zone p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .upload-zone p strong {
+      color: var(--accent);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 200ms ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: transparent;
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 10px 12px;
-      border-radius: 10px;
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Input */
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 10px 14px;
       font-size: 14px;
+      font-family: var(--font-mono);
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      transition: border-color 200ms ease;
     }
-    textarea { min-height: 90px; resize: vertical; }
-    button {
+
+    .input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea.input {
+      min-height: 100px;
+      resize: vertical;
+      font-family: var(--font-sans);
+    }
+
+    /* Log */
+    .log-container {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-time {
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .log-msg {
+      flex: 1;
+    }
+
+    .log-msg.success { color: var(--success); }
+    .log-msg.error { color: var(--error); }
+    .log-msg.warning { color: var(--warning); }
+
+    /* Chat */
+    .chat-messages {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .chat-msg {
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      max-width: 85%;
+    }
+
+    .chat-msg.user {
       background: var(--accent);
-      border: none;
-      color: #0b1016;
-      padding: 10px 16px;
-      font-weight: 700;
-      border-radius: 10px;
-      cursor: pointer;
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
     }
-    .log {
-      margin-top: 16px;
-      display: grid;
+
+    .chat-msg.assistant {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-input-row {
+      display: flex;
       gap: 10px;
     }
-    .msg {
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: #0d141c;
-      font-size: 14px;
-      white-space: pre-wrap;
+
+    .chat-input-row .input {
+      flex: 1;
     }
-    .msg.user { border-left: 3px solid #f1b24b; }
-    .msg.assistant { border-left: 3px solid #56d6a0; }
-    .muted { color: var(--muted); font-size: 12px; }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Conversation History Sidebar */
+    .chat-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .chat-layout { grid-template-columns: 1fr; }
+      .conv-sidebar { display: none; }
+    }
+
+    .conv-sidebar {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .conv-sidebar-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .conv-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 200ms ease;
+    }
+
+    .conv-item:hover {
+      background: var(--panel);
+    }
+
+    .conv-item.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .conv-item-id {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .conv-item.active .conv-item-id {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .conv-item-preview {
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .conv-item-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .conv-item.active .conv-item-meta {
+      color: rgba(255,255,255,0.7);
+    }
+
+    /* Document List */
+    .doc-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .doc-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .doc-item:last-child {
+      border-bottom: none;
+    }
+
+    .doc-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--code-bg);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .doc-icon svg {
+      width: 18px;
+      height: 18px;
+      color: var(--accent);
+    }
+
+    .doc-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .doc-name {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .doc-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-pill.pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    .status-pill.processing {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent);
+    }
+
+    .status-pill.completed {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+    }
+
+    .status-pill.failed {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--error);
+    }
+
+    /* Tabs Navigation */
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--code-bg);
+      padding: 4px;
+      border-radius: 10px;
+    }
+
+    .nav-tab {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 200ms ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+      background: var(--panel);
+    }
+
+    .nav-tab.active {
+      color: var(--text);
+      background: var(--accent);
+    }
+
+    .nav-tab svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Prompt Editor */
+    .prompt-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .prompt-item {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .prompt-header {
+      padding: 12px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .prompt-key {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .prompt-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .prompt-body {
+      padding: 16px;
+    }
+
+    .prompt-textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 12px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .prompt-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .prompt-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    /* Utilities */
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-4 { gap: 16px; }
+    .mt-4 { margin-top: 16px; }
+    .text-sm { font-size: 13px; }
+    .text-muted { color: var(--muted); }
+    .font-mono { font-family: var(--font-mono); }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>RAG Chat</h1>
-      <div class="row">
-        <input id="apiUrl" value="http://localhost:8000" placeholder="API URL" />
-        <button id="newChat">Nova conversa</button>
+  <header class="header">
+    <h1>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      DRAG Test Console
+    </h1>
+    <div class="flex gap-4 items-center">
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="console">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5"/>
+            <line x1="12" y1="19" x2="20" y2="19"/>
+          </svg>
+          Console
+        </button>
+        <button class="nav-tab" data-tab="admin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Admin
+        </button>
+      </nav>
+      <div class="status-badge" id="apiStatus">
+        <span class="status-dot"></span>
+        <span>Checking...</span>
       </div>
-      <div class="muted" id="convId">Conversation ID: (ainda nao criado)</div>
-      <textarea id="message" placeholder="Digite sua pergunta..."></textarea>
-      <div class="row" style="grid-template-columns: 1fr auto;">
-        <div></div>
-        <button id="send">Enviar</button>
-      </div>
-      <div class="log" id="log"></div>
     </div>
-  </div>
+  </header>
+
+  <!-- Console Tab -->
+  <main class="container tab-content active" id="consoleTab">
+    <!-- Document Ingestion Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          Document Ingestion
+        </h2>
+        <span class="text-sm text-muted">Hatchet Workflow</span>
+      </div>
+      <div class="card-body">
+        <div class="input-group">
+          <label>API URL</label>
+          <input type="text" class="input" id="apiUrl" value="http://localhost:8000" />
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p>Drop your file here or <strong>click to browse</strong></p>
+          <p class="text-sm text-muted mt-4">Supports PDF, DOCX, TXT, MD</p>
+          <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" />
+        </div>
+
+        <div class="flex justify-between items-center mt-4">
+          <span class="text-sm text-muted font-mono" id="selectedFile">No file selected</span>
+          <button class="btn btn-primary" id="ingestBtn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 16 12 12 8 16"/>
+              <line x1="12" y1="12" x2="12" y2="21"/>
+              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+            </svg>
+            Upload & Ingest
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Log Card -->
+    <div class="card">
+      <div class="card-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Activity Log
+        </h2>
+        <button class="btn btn-secondary" id="clearLog">Clear</button>
+      </div>
+      <div class="card-body log-container" id="logContainer">
+        <div class="empty-state" id="logEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <p>No activity yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents Card -->
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="card-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          Documentos no RAG
+        </h2>
+        <div class="flex gap-2">
+            <button class="btn btn-secondary" id="minioDeleteBtn" title="Deletar Tudo" style="color: var(--error); border-color: var(--error);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Limpar Tudo
+            </button>
+            <button class="btn btn-secondary" id="refreshDocsBtn">Refresh</button>
+        </div>
+      </div>
+      <div class="card-body doc-list" id="docList">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <p>Nenhum documento encontrado</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Test Card -->
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="card-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          RAG Chat Test
+        </h2>
+        <div class="flex gap-2">
+          <span class="text-sm text-muted font-mono" id="convId">No conversation</span>
+          <button class="btn btn-secondary" id="newChatBtn">New Chat</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="chat-layout">
+          <!-- Conversation History Sidebar -->
+          <div class="conv-sidebar">
+            <div class="conv-sidebar-header">
+              <span>Histórico</span>
+              <button class="btn btn-secondary" id="refreshConvBtn" style="padding: 4px 8px; font-size: 11px;">Refresh</button>
+            </div>
+            <div id="convList">
+              <div class="empty-state" style="padding: 20px;">
+                <p class="text-sm text-muted">Nenhuma conversa</p>
+              </div>
+            </div>
+          </div>
+          <!-- Chat Area -->
+          <div>
+            <div class="chat-messages" id="chatMessages">
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <p>Start a conversation to test RAG</p>
+              </div>
+            </div>
+            <div class="chat-input-row">
+              <input type="text" class="input" id="chatInput" placeholder="Ask a question about your documents..." />
+              <button class="btn btn-primary" id="sendBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Admin Tab -->
+  <main class="container tab-content" id="adminTab">
+    <!-- Prompts Card -->
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="card-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <line x1="10" y1="9" x2="8" y2="9"/>
+          </svg>
+          System Prompts
+        </h2>
+        <button class="btn btn-secondary" id="refreshPromptsBtn">Refresh</button>
+      </div>
+      <div class="card-body">
+        <div class="prompt-list" id="promptList">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <p>Carregando prompts...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 
   <script>
-    const apiUrlEl = document.getElementById("apiUrl");
-    const msgEl = document.getElementById("message");
-    const logEl = document.getElementById("log");
-    const convEl = document.getElementById("convId");
-    const sendBtn = document.getElementById("send");
-    const newBtn = document.getElementById("newChat");
+    // Elements
+    const apiUrlEl = document.getElementById('apiUrl');
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectedFile = document.getElementById('selectedFile');
+    const ingestBtn = document.getElementById('ingestBtn');
+    const logContainer = document.getElementById('logContainer');
+    const logEmpty = document.getElementById('logEmpty');
+    const clearLogBtn = document.getElementById('clearLog');
+    const apiStatus = document.getElementById('apiStatus');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const convIdEl = document.getElementById('convId');
 
+    let currentFile = null;
     let conversationId = null;
 
-    function addMessage(role, text) {
-      const div = document.createElement("div");
-      div.className = `msg ${role}`;
-      div.textContent = text;
-      logEl.appendChild(div);
-      logEl.scrollTop = logEl.scrollHeight;
+    // Utils
+    function log(message, type = 'info') {
+      logEmpty.style.display = 'none';
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      entry.innerHTML = `
+        <span class="log-time">${time}</span>
+        <span class="log-msg ${type}">${message}</span>
+      `;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
     }
 
-    async function createConversation() {
-      const res = await fetch(`${apiUrlEl.value}/conversations`, { method: "POST" });
-      const data = await res.json();
-      conversationId = data.conversation_id;
-      convEl.textContent = `Conversation ID: ${conversationId}`;
-      logEl.innerHTML = "";
+    function addChatMsg(role, text) {
+      const emptyState = chatMessages.querySelector('.empty-state');
+      if (emptyState) emptyState.remove();
+      
+      const msg = document.createElement('div');
+      msg.className = `chat-msg ${role}`;
+      msg.textContent = text;
+      chatMessages.appendChild(msg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+
+    // API Status Check
+    async function checkApiStatus() {
+      try {
+        const res = await fetch(`${apiUrlEl.value}/health`);
+        if (res.ok) {
+          apiStatus.innerHTML = '<span class="status-dot"></span><span>API Online</span>';
+          apiStatus.classList.remove('error');
+          log('API connection successful', 'success');
+        } else {
+          throw new Error('API returned error');
+        }
+      } catch (e) {
+        apiStatus.innerHTML = '<span class="status-dot"></span><span>API Offline</span>';
+        apiStatus.classList.add('error');
+        log('API connection failed: ' + e.message, 'error');
+      }
+    }
+
+    // File Upload
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      currentFile = file;
+      selectedFile.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      ingestBtn.disabled = false;
+      log(`File selected: ${file.name}`);
+    }
+
+    // Ingest
+    ingestBtn.addEventListener('click', async () => {
+      if (!currentFile) return;
+      
+      ingestBtn.disabled = true;
+      ingestBtn.innerHTML = '<span class="spinner"></span> Uploading...';
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', currentFile);
+        
+        log(`Uploading ${currentFile.name}...`);
+        
+        const res = await fetch(`${apiUrlEl.value}/ingest`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          log(`Document queued for ingestion. ID: ${data.document_id}`, 'success');
+          log('Hatchet workflow triggered successfully', 'success');
+        } else {
+          throw new Error(data.detail || 'Upload failed');
+        }
+      } catch (e) {
+        log(`Error: ${e.message}`, 'error');
+      } finally {
+        ingestBtn.disabled = false;
+        ingestBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 16 12 12 8 16"/>
+            <line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+          </svg>
+          Upload & Ingest
+        `;
+      }
+    });
+
+    // Clear Log
+    clearLogBtn.addEventListener('click', () => {
+      logContainer.innerHTML = '';
+      logEmpty.style.display = 'block';
+      logContainer.appendChild(logEmpty);
+    });
+
+    // Chat
+    newChatBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${apiUrlEl.value}/conversations`, { method: 'POST' });
+        const data = await res.json();
+        conversationId = data.conversation_id;
+        convIdEl.textContent = `ID: ${conversationId.slice(0, 8)}...`;
+        chatMessages.innerHTML = '';
+        log(`New conversation created: ${conversationId}`, 'success');
+      } catch (e) {
+        log(`Error creating conversation: ${e.message}`, 'error');
+      }
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
 
     async function sendMessage() {
-      const message = msgEl.value.trim();
+      const message = chatInput.value.trim();
       if (!message) return;
-      addMessage("user", message);
-      msgEl.value = "";
-
-      const payload = { message };
-      if (conversationId) payload.conversation_id = conversationId;
-
-      const res = await fetch(`${apiUrlEl.value}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      conversationId = data.conversation_id;
-      convEl.textContent = `Conversation ID: ${conversationId}`;
-      addMessage("assistant", data.response);
+      
+      addChatMsg('user', message);
+      chatInput.value = '';
+      sendBtn.disabled = true;
+      
+      try {
+        const payload = { message };
+        if (conversationId) payload.conversation_id = conversationId;
+        
+        const res = await fetch(`${apiUrlEl.value}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await res.json();
+        
+        if (!conversationId) {
+          conversationId = data.conversation_id;
+          convIdEl.textContent = `ID: ${conversationId.slice(0, 8)}...`;
+        }
+        
+        addChatMsg('assistant', data.response);
+        log('Chat response received');
+      } catch (e) {
+        log(`Chat error: ${e.message}`, 'error');
+        addChatMsg('assistant', 'Error: Could not get response');
+      } finally {
+        sendBtn.disabled = false;
+      }
     }
 
-    newBtn.addEventListener("click", createConversation);
-    sendBtn.addEventListener("click", sendMessage);
+    // Init
+    checkApiStatus();
+    apiUrlEl.addEventListener('change', checkApiStatus);
+
+    // Conversation History
+    const convList = document.getElementById('convList');
+    const refreshConvBtn = document.getElementById('refreshConvBtn');
+
+    async function loadConversations() {
+      try {
+        const res = await fetch(`${apiUrlEl.value}/conversations`);
+        const conversations = await res.json();
+        
+        if (conversations.length === 0) {
+          convList.innerHTML = '<div class="empty-state" style="padding: 20px;"><p class="text-sm text-muted">Nenhuma conversa</p></div>';
+          return;
+        }
+        
+        convList.innerHTML = conversations.map(conv => `
+          <div class="conv-item ${conv.conversation_id === conversationId ? 'active' : ''}" data-id="${conv.conversation_id}">
+            <div class="conv-item-id">${conv.conversation_id.slice(0, 8)}...</div>
+            <div class="conv-item-preview">${conv.preview}</div>
+            <div class="conv-item-meta">${conv.message_count} mensagens</div>
+          </div>
+        `).join('');
+        
+        // Add click handlers
+        convList.querySelectorAll('.conv-item').forEach(item => {
+          item.addEventListener('click', () => loadConversation(item.dataset.id));
+        });
+        
+        log(`Loaded ${conversations.length} conversations`);
+      } catch (e) {
+        log(`Error loading conversations: ${e.message}`, 'error');
+      }
+    }
+
+    async function loadConversation(id) {
+      try {
+        conversationId = id;
+        convIdEl.textContent = `ID: ${id.slice(0, 8)}...`;
+        chatMessages.innerHTML = '<div class="empty-state"><span class="spinner"></span><p>Carregando...</p></div>';
+        
+        // Update active state in sidebar
+        convList.querySelectorAll('.conv-item').forEach(item => {
+          item.classList.toggle('active', item.dataset.id === id);
+        });
+        
+        const res = await fetch(`${apiUrlEl.value}/conversations/${id}/messages`);
+        const messages = await res.json();
+        
+        chatMessages.innerHTML = '';
+        
+        if (messages.length === 0) {
+          chatMessages.innerHTML = '<div class="empty-state"><p>Conversa vazia</p></div>';
+          return;
+        }
+        
+        messages.forEach(msg => addChatMsg(msg.role, msg.content));
+        log(`Loaded conversation ${id.slice(0, 8)} with ${messages.length} messages`);
+      } catch (e) {
+        log(`Error loading conversation: ${e.message}`, 'error');
+        chatMessages.innerHTML = '<div class="empty-state"><p>Erro ao carregar conversa</p></div>';
+      }
+    }
+
+    refreshConvBtn.addEventListener('click', loadConversations);
+    
+    // Load conversations on startup
+    setTimeout(loadConversations, 1000);
+
+    // Documents
+    const docList = document.getElementById('docList');
+    const refreshDocsBtn = document.getElementById('refreshDocsBtn');
+
+    const minioDeleteBtn = document.getElementById('minioDeleteBtn');
+
+    async function loadDocuments() {
+      try {
+        const res = await fetch(`${apiUrlEl.value}/documents`);
+        const documents = await res.json();
+        
+        if (documents.length === 0) {
+          docList.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <p>Nenhum documento encontrado</p>
+            </div>
+          `;
+          return;
+        }
+        
+        docList.innerHTML = documents.map(doc => `
+          <div class="doc-item">
+            <div class="doc-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="doc-info">
+              <div class="doc-name">${doc.filename}</div>
+              <div class="doc-meta">
+                ${doc.chunk_count ? doc.chunk_count + ' chunks' : 'Processando...'}
+                ${doc.error_message ? ' • ' + doc.error_message : ''}
+              </div>
+            </div>
+            <span class="status-pill ${doc.status}">${doc.status}</span>
+            <button class="btn btn-secondary" onclick="deleteDocument('${doc.id}')" title="Deletar" style="padding: 4px 8px; margin-left: 8px; color: var(--error); border-color: var(--border);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+            </button>
+          </div>
+        `).join('');
+        
+        log(`Loaded ${documents.length} documents`);
+      } catch (e) {
+        log(`Error loading documents: ${e.message}`, 'error');
+      }
+    }
+
+    async function deleteDocument(id) {
+        if (!confirm('Tem certeza que deseja deletar este documento?')) return;
+        
+        try {
+            const res = await fetch(`${apiUrlEl.value}/documents/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                log(`Documento deletado com sucesso`, 'success');
+                loadDocuments();
+            } else {
+                const data = await res.json();
+                throw new Error(data.detail || 'Falha ao deletar');
+            }
+        } catch (e) {
+            log(`Erro ao deletar documento: ${e.message}`, 'error');
+        }
+    }
+
+    // Deletar tudo
+    minioDeleteBtn.addEventListener('click', async () => {
+        if (!confirm('ATENÇÃO: Isso apagará TODOS os documentos do banco de dados e do MinIO. Tem certeza?')) return;
+        
+        try {
+            const res = await fetch(`${apiUrlEl.value}/documents`, { method: 'DELETE' });
+            if (res.ok) {
+                const data = await res.json();
+                log(`Limpeza concluída. ${data.count} documentos removidos.`, 'success');
+                loadDocuments();
+            } else {
+                throw new Error('Falha ao limpar documentos');
+            }
+        } catch (e) {
+            log(`Erro ao limpar documentos: ${e.message}`, 'error');
+        }
+    });
+
+    // Make deleteDocument global
+    window.deleteDocument = deleteDocument;
+
+    refreshDocsBtn.addEventListener('click', loadDocuments);
+    
+    // Load documents on startup
+    setTimeout(loadDocuments, 1200);
+
+    // Tab Navigation
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    navTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        
+        // Update active tab button
+        navTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Show target content
+        tabContents.forEach(content => {
+          content.classList.toggle('active', content.id === targetTab + 'Tab');
+        });
+        
+        // Load prompts when switching to admin tab
+        if (targetTab === 'admin') {
+          loadPrompts();
+        }
+      });
+    });
+
+    // Prompts Management
+    const promptList = document.getElementById('promptList');
+    const refreshPromptsBtn = document.getElementById('refreshPromptsBtn');
+
+    async function loadPrompts() {
+      try {
+        const res = await fetch(`${apiUrlEl.value}/prompts`);
+        const prompts = await res.json();
+        
+        if (prompts.length === 0) {
+          promptList.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <p>Nenhum prompt configurado</p>
+            </div>
+          `;
+          return;
+        }
+        
+        promptList.innerHTML = prompts.map(prompt => `
+          <div class="prompt-item" data-key="${prompt.key}">
+            <div class="prompt-header">
+              <span class="prompt-key">${prompt.key}</span>
+              <span class="prompt-meta">Atualizado: ${new Date(prompt.updated_at).toLocaleString('pt-BR')}</span>
+            </div>
+            <div class="prompt-body">
+              <textarea class="prompt-textarea" data-key="${prompt.key}">${prompt.template}</textarea>
+              <div class="prompt-actions">
+                <button class="btn btn-success" onclick="savePrompt('${prompt.key}')">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  Salvar
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        
+        log(`Loaded ${prompts.length} prompts`);
+      } catch (e) {
+        log(`Error loading prompts: ${e.message}`, 'error');
+        promptList.innerHTML = `<div class="empty-state"><p>Erro ao carregar prompts</p></div>`;
+      }
+    }
+
+    async function savePrompt(key) {
+      const textarea = document.querySelector(`.prompt-textarea[data-key="${key}"]`);
+      const newTemplate = textarea.value;
+      
+      try {
+        const res = await fetch(`${apiUrlEl.value}/prompts/${key}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ template: newTemplate })
+        });
+        
+        if (res.ok) {
+          log(`Prompt "${key}" atualizado com sucesso!`, 'success');
+          loadPrompts(); // Refresh to show updated time
+        } else {
+          const data = await res.json();
+          throw new Error(data.detail || 'Update failed');
+        }
+      } catch (e) {
+        log(`Error saving prompt: ${e.message}`, 'error');
+      }
+    }
+
+    // Make savePrompt available globally
+    window.savePrompt = savePrompt;
+
+    refreshPromptsBtn.addEventListener('click', loadPrompts);
   </script>
 </body>
 </html>
