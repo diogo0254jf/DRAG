@@ -1,5 +1,7 @@
 # DRAG — Conversational RAG over your documents
 
+> **Status: archived.** An exploratory prototype built to evaluate replacing R2R with an in-house RAG stack. The idea did not move forward, so the project is no longer maintained.
+
 DRAG is a chat API that answers questions about your own documents (PDF, Markdown, text, JSON, HTML). The chat flow is a **LangGraph** state machine with LLM routing, hybrid retrieval and long-term conversation memory. Document ingestion runs as a background **Hatchet** workflow. Everything runs locally with **Ollama** models.
 
 ## Architecture
@@ -115,6 +117,15 @@ prompts.seed.json      default prompt templates
 scripts/               container startup and smoke test
 web/index.html         minimal chat UI
 ```
+
+## Known limitations
+
+This is a prototype, not production code:
+
+- No automated test suite, only a smoke test script.
+- No authentication, and CORS is open.
+- LLM calls are synchronous, and `/chat/stream` streams per graph node, not per token.
+- The keyword search uses the English text-search dictionary.
 
 ## Notes
 
