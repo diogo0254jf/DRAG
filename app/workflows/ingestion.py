@@ -1,7 +1,4 @@
-"""Ingestion workflow — Download → Parse → Chunk → Embed → PGVector.
-
-Implements §4.1 of the Implementation Plan.
-"""
+"""Ingestion workflow: download, parse, chunk, embed and store in PGVector."""
 import logging
 import os
 import tempfile
@@ -56,7 +53,7 @@ def process(input: DocumentInput, context: Context):
             local_path = tmp.name
 
         try:
-            # 2. Chunk the document (§4.1 – Parser Registry + Splitter)
+            # 2. Chunk the document
             chunks = load_and_chunk(
                 file_path=local_path,
                 filename=document.filename,

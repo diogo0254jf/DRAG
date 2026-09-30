@@ -1,8 +1,7 @@
 """
 Hybrid retrieval service combining semantic and keyword search.
 
-Implements Reciprocal Rank Fusion (RRF) as defined in §4.2 of the
-Implementation Plan.
+Results from both searches are merged with Reciprocal Rank Fusion (RRF).
 """
 import logging
 from typing import Optional
@@ -34,14 +33,14 @@ def retrieve_context(
     Returns:
         Tuple of (formatted context string, list of source Documents).
     """
-    # ── Semantic search ─────────────────────────────────────────────
+    # Semantic search
     try:
         semantic_docs = retriever.invoke(query)
     except Exception as exc:
         logger.error("Semantic search failed: %s", exc)
         semantic_docs = []
 
-    # ── Keyword search (requires a db session) ─────────────────────
+    # Keyword search (requires a db session)
     keyword_docs: list[Document] = []
     if db_session is not None:
         try:
@@ -49,7 +48,7 @@ def retrieve_context(
         except Exception as exc:
             logger.debug("Keyword search unavailable: %s", exc)
 
-    # ── Fuse results ────────────────────────────────────────────────
+    # Fuse results
     if semantic_docs and keyword_docs:
         fused = _reciprocal_rank_fusion([semantic_docs, keyword_docs], k=k)
     elif semantic_docs:
@@ -63,7 +62,7 @@ def retrieve_context(
     return context, fused
 
 
-# ── Private helpers ─────────────────────────────────────────────────
+# Private helpers
 
 def _keyword_search(
     db_session,

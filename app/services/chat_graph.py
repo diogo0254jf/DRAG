@@ -96,7 +96,7 @@ def create_retrieve_node(retriever, db_session_factory=None):
     """Create the retrieve node with hybrid search support."""
 
     def retrieve(state: ChatState) -> dict:
-        """Retrieve relevant documents using hybrid search (§4.2)."""
+        """Retrieve relevant documents using hybrid search."""
         if state.error:
             return {}
 

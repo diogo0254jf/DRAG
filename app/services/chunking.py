@@ -1,8 +1,7 @@
 """
 Document chunking service.
 
-Supports multiple file types with appropriate chunking strategies
-as defined in the Implementation Plan §4.1.
+Picks a loader and a chunk size per file type.
 """
 import logging
 from typing import Optional
@@ -15,7 +14,7 @@ from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
 
-# ── Chunk-size config per content type ──────────────────────────────
+# Chunk-size config per content type
 CHUNK_CONFIGS: dict[str, dict] = {
     "text/plain":       {"chunk_size": 800,  "chunk_overlap": 200},
     "application/pdf":  {"chunk_size": 1200, "chunk_overlap": 300},
@@ -36,7 +35,7 @@ _EXT_TO_MIME: dict[str, str] = {
 }
 
 
-# ── Helpers ─────────────────────────────────────────────────────────
+# Helpers
 
 def _get_splitter(content_type: str):
     """Select text splitter based on content type."""
@@ -94,7 +93,7 @@ def _load_file(file_path: str, content_type: str) -> list[Document]:
             return [Document(page_content=fh.read())]
 
 
-# ── Public API ──────────────────────────────────────────────────────
+# Public API
 
 def load_and_chunk(
     file_path: str,

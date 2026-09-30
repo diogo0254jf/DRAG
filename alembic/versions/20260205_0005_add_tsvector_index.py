@@ -5,7 +5,7 @@ Revises: 20260205_0004
 Create Date: 2026-02-09 00:00:00
 
 Adds a GIN index on the langchain_pg_embedding.document column to enable
-fast full-text keyword search as part of the Hybrid Retrieval strategy (§4.2).
+fast full-text keyword search for hybrid retrieval.
 """
 from alembic import op
 

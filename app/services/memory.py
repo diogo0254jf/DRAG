@@ -63,6 +63,5 @@ def update_conversation_memory(
             conversation.memory_updated_at = datetime.utcnow()
             db.commit()
     except Exception:
-        # If structured output fails, silently skip update
-        # This is better than crashing the entire request
+        # Memory is optional: skip the update instead of failing the request
         pass

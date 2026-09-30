@@ -16,7 +16,7 @@ RETRY_INTERVAL=2
 
 # Function to wait for Hatchet and get token
 init_hatchet_token() {
-    echo -e "${YELLOW}🔄 Waiting for Hatchet to be ready...${NC}"
+    echo -e "${YELLOW}Waiting for Hatchet to be ready...${NC}"
 
     # Wait for Hatchet API to be available using internal hostname
     for i in $(seq 1 $MAX_RETRIES); do
@@ -24,12 +24,12 @@ init_hatchet_token() {
             -H "Content-Type: application/json" \
             -d "{\"email\": \"${HATCHET_ADMIN_EMAIL}\", \"password\": \"${HATCHET_ADMIN_PASSWORD}\"}" \
             > /dev/null 2>&1; then
-            echo -e "${GREEN}✅ Hatchet is ready!${NC}"
+            echo -e "${GREEN}Hatchet is ready!${NC}"
             break
         fi
         
         if [ $i -eq $MAX_RETRIES ]; then
-            echo -e "${RED}❌ Hatchet failed to start after ${MAX_RETRIES} attempts${NC}"
+            echo -e "${RED}Hatchet failed to start after ${MAX_RETRIES} attempts${NC}"
             return 1
         fi
         
@@ -43,10 +43,10 @@ init_hatchet_token() {
         TOKEN_GRPC=$(echo "$HATCHET_CLIENT_TOKEN" | cut -d'.' -f2 | base64 -d 2>/dev/null | grep -o '"grpc_broadcast_address":"[^"]*"' | cut -d'"' -f4 || echo "")
         
         if [ "$TOKEN_GRPC" = "hatchet:7077" ]; then
-            echo -e "${GREEN}✅ Existing token is valid (grpc: $TOKEN_GRPC)${NC}"
+            echo -e "${GREEN}Existing token is valid (grpc: $TOKEN_GRPC)${NC}"
             return 0
         else
-            echo -e "${YELLOW}⚠️  Existing token has wrong grpc_broadcast_address: $TOKEN_GRPC${NC}"
+            echo -e "${YELLOW}Existing token has wrong grpc_broadcast_address: $TOKEN_GRPC${NC}"
             echo -e "${YELLOW}   Expected: hatchet:7077 - generating new token...${NC}"
         fi
     fi
@@ -75,7 +75,7 @@ init_hatchet_token() {
     fi
 
     if [ -z "$TENANT_ID" ] || [ "$TENANT_ID" = "null" ]; then
-        echo -e "${YELLOW}⚠️  Could not get tenant from API, trying default tenant ID...${NC}"
+        echo -e "${YELLOW}Could not get tenant from API, trying default tenant ID...${NC}"
         # Use default tenant ID from hatchet-lite
         TENANT_ID="707d0855-80ab-4e1f-a156-f1c4546cbf52"
     fi
@@ -83,7 +83,7 @@ init_hatchet_token() {
     echo -e "${GREEN}   Tenant ID: $TENANT_ID${NC}"
 
     # Create API token
-    echo -e "${YELLOW}🔑 Creating API token...${NC}"
+    echo -e "${YELLOW}Creating API token...${NC}"
     TOKEN_NAME="worker-token-$(date +%s)"
     TOKEN_RESPONSE=$(curl -s -b /tmp/cookies.txt \
         "${HATCHET_INTERNAL_URL}/api/v1/tenants/${TENANT_ID}/api-tokens" -X POST \
@@ -95,12 +95,12 @@ init_hatchet_token() {
     NEW_TOKEN=$(echo "$TOKEN_RESPONSE" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
     if [ -z "$NEW_TOKEN" ]; then
-        echo -e "${RED}❌ Failed to create token${NC}"
+        echo -e "${RED}Failed to create token${NC}"
         echo "   Full response: $TOKEN_RESPONSE"
         return 1
     fi
 
-    echo -e "${GREEN}✅ New token created successfully!${NC}"
+    echo -e "${GREEN}New token created successfully!${NC}"
     
     # Validate the new token
     NEW_TOKEN_GRPC=$(echo "$NEW_TOKEN" | cut -d'.' -f2 | base64 -d 2>/dev/null | grep -o '"grpc_broadcast_address":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
@@ -118,7 +118,7 @@ if [[ "$*" == *"worker"* ]] || [[ "$*" == *"hatchet"* ]] || [[ "$*" == *"uvicorn
     init_hatchet_token || exit 1
 fi
 
-echo -e "${GREEN}🚀 Starting application...${NC}"
+echo -e "${GREEN}Starting application...${NC}"
 
 # Execute the passed command
 if [ "$1" = "uvicorn" ]; then

@@ -101,7 +101,7 @@ async def chat_stream(
     """Streaming chat endpoint using Server-Sent Events (SSE).
 
     Streams node-level updates as they happen in the LangGraph
-    execution, then persists the final response.  Implements §5.2.
+    execution, then persists the final response.
     """
     conversation = _ensure_conversation(db, payload.conversation_id)
 

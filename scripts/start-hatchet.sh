@@ -5,5 +5,5 @@ set -e
 /scripts/init-hatchet.sh
 
 # Start the Hatchet engine
-echo "🚀 Starting Hatchet Engine..."
+echo "Starting Hatchet Engine..."
 exec /hatchet/hatchet-engine

@@ -64,7 +64,7 @@ app.include_router(admin.router)
 def _build_checkpointer():
     """Build the best available checkpointer.
 
-    Prefers PostgresSaver (production-grade) and falls back to SqliteSaver.
+    Prefers PostgresSaver and falls back to SqliteSaver.
     """
     if DATABASE_URL:
         try:
