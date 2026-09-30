@@ -15,11 +15,10 @@ DATABASE_URL = os.getenv(
     f"postgresql+psycopg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 )
 
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 OLLAMA_CHAT_MODEL = os.getenv("OLLAMA_CHAT_MODEL", "llama3.1")
 OLLAMA_VISION_MODEL = os.getenv("OLLAMA_VISION_MODEL", "llama3.2-vision")
 OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
-DOCS_DIR = os.getenv("DOCS_DIR", "docs")
-FAISS_PATH = os.getenv("FAISS_PATH", "faiss_index")
 RAG_K = int(os.getenv("RAG_K", "4"))
 PROMPT_SEED_PATH = os.getenv("PROMPT_SEED_PATH", "prompts.seed.json")
 HISTORY_MAX_CHARS = int(os.getenv("HISTORY_MAX_CHARS", "4000"))

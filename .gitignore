@@ -9,3 +9,10 @@ wheels/
 # Virtual environments
 .venv
 docs/*
+
+# Local secrets and runtime data
+.env
+encryption-keys/
+checkpoints.db*
+faiss_index/
+.DS_Store

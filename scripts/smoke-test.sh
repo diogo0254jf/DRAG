@@ -1,5 +1,5 @@
 #!/bin/bash
-# test_fix.sh
+# Smoke test: two chat turns that check conversation memory.
 
 # 1. Start a new conversation
 echo "--- Turn 1: Tell about dog ---"

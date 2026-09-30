@@ -1,1 +1,0 @@
-Este é um documento de teste sobre IA e RAG. Ollama roda localmente.
